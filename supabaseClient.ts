@@ -1,28 +1,17 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const getEnv = (key: string) => {
-  // Intenta obtener de process.env (Node/Vite/Webpack)
-  if (typeof process !== 'undefined' && process.env && (process.env as any)[key]) {
-    return (process.env as any)[key];
-  }
-  // Intenta obtener de import.meta.env (Vite moderno)
-  try {
-    const metaEnv = (import.meta as any).env;
-    if (metaEnv && metaEnv[key]) return metaEnv[key];
-  } catch (e) {}
-  
-  return '';
-};
+// Acceso directo a process.env para máxima fiabilidad en este entorno
+const supabaseUrl = (process.env as any).SUPABASE_URL || '';
+const supabaseAnonKey = (process.env as any).SUPABASE_ANON_KEY || '';
 
-const supabaseUrl = getEnv('SUPABASE_URL');
-const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY');
-
-// Inicializamos el cliente. Si faltan las llaves, será null.
+// Inicializamos el cliente.
 export const supabase = (supabaseUrl && supabaseAnonKey) 
   ? createClient(supabaseUrl, supabaseAnonKey) 
   : null;
 
 export const isSupabaseConfigured = () => {
-  return !!supabase;
+  // Verificación robusta de presencia de llaves
+  return typeof supabaseUrl === 'string' && supabaseUrl.length > 10 && 
+         typeof supabaseAnonKey === 'string' && supabaseAnonKey.length > 10;
 };

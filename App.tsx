@@ -17,7 +17,7 @@ const App: React.FC = () => {
 
   // Gestión de sesión real de Supabase
   useEffect(() => {
-    if (!isSupabaseConfigured() || !supabase) return;
+    if (!supabase) return;
 
     const handleAuth = (session: any) => {
       if (session?.user) {
@@ -26,7 +26,6 @@ const App: React.FC = () => {
         
         const discordUser: DiscordUser = {
           id: u.id,
-          // Priorizamos el nombre global o full_name que viene de Discord
           username: metadata.custom_claims?.global_name || metadata.full_name || metadata.name || u.email?.split('@')[0] || 'Unknown User',
           discriminator: '0000',
           avatar: metadata.avatar_url || `https://ui-avatars.com/api/?name=${u.id}&background=random`
@@ -49,7 +48,7 @@ const App: React.FC = () => {
   }, []);
 
   const fetchApplications = async () => {
-    if (!isSupabaseConfigured() || !supabase) {
+    if (!supabase) {
       const saved = localStorage.getItem('shaiya_apps');
       if (saved) setApplications(JSON.parse(saved));
       return;
@@ -77,7 +76,8 @@ const App: React.FC = () => {
         hackerScenario: app.hacker_scenario,
         ethicsScenario: app.ethics_scenario,
         pressureScenario: app.pressure_scenario,
-        communicationScenario: app.communication_scenario,
+        // Usamos el nombre que probablemente tiene Supabase (si está truncado en la UI)
+        communicationScenario: app.communication_scenario || app.communication_scen || '',
         contribution: app.contribution,
         status: app.status,
         aiScore: app.ai_score,
@@ -103,7 +103,7 @@ const App: React.FC = () => {
   const handleSubmitApplication = async (app: GSApplication) => {
     setLoading(true);
     
-    if (isSupabaseConfigured() && supabase) {
+    if (supabase) {
       try {
         const { error } = await supabase.from('gs_applications').insert([{
           user_id: app.userId,
@@ -128,6 +128,9 @@ const App: React.FC = () => {
         if (error) throw error;
       } catch (err) {
         console.error("Database error:", err);
+        // Fallback local si la red falla
+        const current = JSON.parse(localStorage.getItem('shaiya_apps') || '[]');
+        localStorage.setItem('shaiya_apps', JSON.stringify([app, ...current]));
       }
     } else {
       const current = JSON.parse(localStorage.getItem('shaiya_apps') || '[]');
