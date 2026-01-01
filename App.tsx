@@ -22,23 +22,25 @@ const App: React.FC = () => {
     const handleAuth = (session: any) => {
       if (session?.user) {
         const u = session.user;
+        const metadata = u.user_metadata || {};
+        
         const discordUser: DiscordUser = {
           id: u.id,
-          username: u.user_metadata.full_name || u.user_metadata.custom_claims?.global_name || u.email?.split('@')[0] || 'Unknown',
+          // Priorizamos el nombre global o full_name que viene de Discord
+          username: metadata.custom_claims?.global_name || metadata.full_name || metadata.name || u.email?.split('@')[0] || 'Unknown User',
           discriminator: '0000',
-          avatar: u.user_metadata.avatar_url || `https://ui-avatars.com/api/?name=${u.email}&background=random`
+          avatar: metadata.avatar_url || `https://ui-avatars.com/api/?name=${u.id}&background=random`
         };
+        
         setUser(discordUser);
         setView('form');
       }
     };
 
-    // 1. Revisar sesión actual al cargar
     supabase.auth.getSession().then(({ data: { session } }) => {
       handleAuth(session);
     });
 
-    // 2. Escuchar cambios (necesario para el redirect de OAuth)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       handleAuth(session);
     });
@@ -74,7 +76,6 @@ const App: React.FC = () => {
         conflictScenario: app.conflict_scenario,
         hackerScenario: app.hacker_scenario,
         ethicsScenario: app.ethics_scenario,
-        // Fix: Mapping the property name correctly to match the GSApplication interface
         pressureScenario: app.pressure_scenario,
         communicationScenario: app.communication_scenario,
         contribution: app.contribution,
@@ -129,7 +130,6 @@ const App: React.FC = () => {
         console.error("Database error:", err);
       }
     } else {
-      // Si no hay base de datos, guardamos local para que el admin pueda verlo en su sesión
       const current = JSON.parse(localStorage.getItem('shaiya_apps') || '[]');
       localStorage.setItem('shaiya_apps', JSON.stringify([app, ...current]));
     }
