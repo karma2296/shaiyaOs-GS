@@ -1,39 +1,38 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Helper to get environment variables across different environments
+// Función para obtener variables de entorno con máxima compatibilidad
 const getEnv = (key: string): string => {
-  // Check browser process.env (Vite/CRA style)
-  if (typeof process !== 'undefined' && process.env && process.env[key]) {
-    return process.env[key] as string;
-  }
-  // Check window.process (some sandboxes)
-  const windowProcess = (window as any).process;
-  if (windowProcess && windowProcess.env && windowProcess.env[key]) {
-    return windowProcess.env[key];
-  }
-  // Check import.meta.env (Vite native)
-  const importMeta = (import.meta as any);
-  if (importMeta && importMeta.env && importMeta.env[`VITE_${key}`]) {
-    return importMeta.env[`VITE_${key}`];
-  }
-  
-  return '';
+  const env = (import.meta as any).env || {};
+  const proc = (typeof process !== 'undefined' ? process.env : {}) as any;
+  const win = (window as any).process?.env || {};
+
+  return (
+    proc[key] || 
+    proc[`VITE_${key}`] || 
+    proc[`NEXT_PUBLIC_${key}`] ||
+    env[key] || 
+    env[`VITE_${key}`] || 
+    win[key] ||
+    ''
+  );
 };
 
 const supabaseUrl = getEnv('SUPABASE_URL');
 const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY');
 
-// If keys are missing, we use placeholder strings to avoid immediate initialization crashes,
-// but we'll check validity using isSupabaseConfigured() before making calls.
+// Solo inicializamos si tenemos valores, de lo contrario usamos strings que indiquen el error
 export const supabase = createClient(
-  supabaseUrl || 'https://missing-url.supabase.co', 
-  supabaseAnonKey || 'missing-key'
+  supabaseUrl || 'https://placeholder-error.supabase.co',
+  supabaseAnonKey || 'no-key-provided'
 );
 
 export const isSupabaseConfigured = () => {
-  return !!supabaseUrl && 
-         supabaseUrl.startsWith('https://') && 
-         !!supabaseAnonKey && 
-         supabaseAnonKey !== 'missing-key';
+  return (
+    !!supabaseUrl && 
+    supabaseUrl.includes('.supabase.co') && 
+    !supabaseUrl.includes('placeholder-error') &&
+    !!supabaseAnonKey &&
+    supabaseAnonKey !== 'no-key-provided'
+  );
 };

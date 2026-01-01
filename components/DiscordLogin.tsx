@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { supabase } from '../supabaseClient';
+import { supabase, isSupabaseConfigured } from '../supabaseClient';
 
 interface DiscordLoginProps {
   onBack: () => void;
@@ -8,11 +8,16 @@ interface DiscordLoginProps {
 
 const DiscordLogin: React.FC<DiscordLoginProps> = ({ onBack }) => {
   const [loading, setLoading] = useState(false);
+  const configured = isSupabaseConfigured();
 
   const handleLoginAction = async () => {
+    if (!configured) {
+      alert("⚠️ Error de Configuración: No se detectaron las llaves de Supabase en el servidor.");
+      return;
+    }
+
     setLoading(true);
     try {
-      // Intentamos el login directamente sin comprobaciones previas
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'discord',
         options: {
@@ -22,12 +27,7 @@ const DiscordLogin: React.FC<DiscordLoginProps> = ({ onBack }) => {
       });
       
       if (error) {
-        // Si falla por falta de configuración, damos un mensaje más útil
-        if (error.message.includes('apiKey') || error.message.includes('url')) {
-          alert("Error de Conexión: Las llaves de Supabase no parecen estar llegando al navegador. Por favor, asegúrate de que las variables SUPABASE_URL y SUPABASE_ANON_KEY estén guardadas en el panel y refresca la página.");
-        } else {
-          alert(`Error: ${error.message}`);
-        }
+        alert(`Error de Auth: ${error.message}`);
         setLoading(false);
       }
     } catch (err: any) {
@@ -47,21 +47,36 @@ const DiscordLogin: React.FC<DiscordLoginProps> = ({ onBack }) => {
       
       <h2 className="text-2xl font-fantasy gold-text mb-4 uppercase tracking-[0.2em]">Council Verification</h2>
       
-      <p className="text-slate-500 mb-10 font-gothic text-sm leading-relaxed max-w-xs mx-auto">
-        Verifica tu identidad mediante los archivos de Discord para acceder a los pergaminos de reclutamiento.
-      </p>
+      {!configured ? (
+        <div className="bg-red-900/20 border border-red-900/50 p-4 mb-8 text-left">
+          <p className="text-red-400 text-xs font-bold uppercase mb-2">⚠️ Error de Sistema</p>
+          <p className="text-slate-400 text-[10px] leading-relaxed mb-4">
+            Las variables de entorno no han sido detectadas. Para corregir esto:
+          </p>
+          <ul className="text-[9px] text-slate-500 space-y-1 font-mono">
+            <li>1. Ve al panel de Vercel / Configuración.</li>
+            <li>2. Añade <span className="text-slate-300">SUPABASE_URL</span></li>
+            <li>3. Añade <span className="text-slate-300">SUPABASE_ANON_KEY</span></li>
+            <li>4. Reinicia el despliegue.</li>
+          </ul>
+        </div>
+      ) : (
+        <p className="text-slate-500 mb-10 font-gothic text-sm leading-relaxed max-w-xs mx-auto">
+          Verifica tu identidad mediante los archivos de Discord para acceder a los pergaminos de reclutamiento.
+        </p>
+      )}
       
       <div className="space-y-4">
         <button
           onClick={handleLoginAction}
-          disabled={loading}
-          className="w-full flex items-center justify-center gap-3 py-5 px-6 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded-sm transition-all disabled:opacity-50 font-gothic text-sm shadow-xl active:scale-95 group"
+          disabled={loading || !configured}
+          className="w-full flex items-center justify-center gap-3 py-5 px-6 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded-sm transition-all disabled:opacity-30 disabled:grayscale font-gothic text-sm shadow-xl active:scale-95 group"
         >
           {loading ? (
             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
           ) : (
             <>
-              <span>Login with Discord</span>
+              <span>{configured ? 'Login with Discord' : 'System Locked'}</span>
               <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
