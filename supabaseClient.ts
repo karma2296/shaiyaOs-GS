@@ -1,8 +1,13 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = (process.env as any).SUPABASE_URL || '';
-const supabaseAnonKey = (process.env as any).SUPABASE_ANON_KEY || '';
+// Intentamos obtener las variables de múltiples formas según el entorno
+const getEnv = (key: string) => {
+  return (process.env as any)[key] || '';
+};
+
+const supabaseUrl = getEnv('SUPABASE_URL');
+const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY');
 
 // Solo inicializamos si tenemos los datos, de lo contrario devolvemos null
 export const supabase = (supabaseUrl && supabaseAnonKey) 
@@ -10,6 +15,5 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
   : null;
 
 export const isSupabaseConfigured = () => {
-  if (!supabase) return false;
-  return true;
+  return !!supabase;
 };

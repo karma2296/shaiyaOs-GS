@@ -3,15 +3,9 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { GSApplication } from "./types";
 
 export const analyzeApplication = async (app: Partial<GSApplication>) => {
-  const apiKey = process.env.API_KEY;
-  
-  if (!apiKey) {
-    console.warn("API_KEY no configurada en Vercel. Saltando análisis de IA.");
-    return { score: 50, summary: "AI analysis skipped: API key not configured." };
-  }
-
   try {
-    const ai = new GoogleGenAI({ apiKey });
+    // Initializing the GoogleGenAI client with process.env.API_KEY directly
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Analyze this application for the Game Sage (GS) position in the Shaiya OS MMORPG server.
@@ -47,7 +41,9 @@ export const analyzeApplication = async (app: Partial<GSApplication>) => {
       },
     });
 
-    return JSON.parse(response.text);
+    // Accessing the generated text using the .text property
+    const jsonStr = response.text?.trim() || "{}";
+    return JSON.parse(jsonStr);
   } catch (error) {
     console.error("Error analyzing application:", error);
     return { score: 0, summary: "AI analysis could not be performed at this time." };

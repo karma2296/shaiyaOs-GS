@@ -10,20 +10,26 @@ interface DiscordLoginProps {
 
 const DiscordLogin: React.FC<DiscordLoginProps> = ({ onLogin, onBack }) => {
   const [loading, setLoading] = useState(false);
+  const isConfigured = isSupabaseConfigured();
 
   const handleLoginAction = async () => {
     setLoading(true);
     
-    // Si Supabase está configurado con Discord, intentamos login real
-    if (isSupabaseConfigured() && supabase) {
+    if (isConfigured && supabase) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'discord',
+        options: {
+          // Asegura que Discord regrese a la raíz de tu sitio
+          redirectTo: window.location.origin
+        }
       });
+
       if (error) {
         console.error("OAuth error:", error);
-        // Fallback a simulación si falla
+        alert("Discord connection failed. Entering simulation mode.");
         runSimulation();
       }
+      // Si funciona, el navegador se redirigirá fuera de aquí
     } else {
       runSimulation();
     }
@@ -50,8 +56,20 @@ const DiscordLogin: React.FC<DiscordLoginProps> = ({ onLogin, onBack }) => {
       </div>
       
       <h2 className="text-2xl font-fantasy gold-text mb-4 uppercase tracking-[0.2em]">Council Verification</h2>
+      
+      {!isConfigured && (
+        <div className="bg-amber-900/20 border border-amber-900/50 p-3 mb-6 flex items-center gap-3">
+          <span className="text-xl">⚠️</span>
+          <p className="text-[10px] text-amber-200 uppercase font-gothic tracking-widest text-left">
+            Environment keys missing. Running in <b>SIMULATION MODE</b>.
+          </p>
+        </div>
+      )}
+
       <p className="text-slate-500 mb-10 font-gothic text-sm leading-relaxed max-w-xs mx-auto">
-        To maintain order in the realm, your identity must be verified via the Discord Archives.
+        {isConfigured 
+          ? "Establish a secure link with the Discord Archives to prove your identity."
+          : "Configuration incomplete. A simulated identity will be assigned for testing."}
       </p>
       
       <div className="space-y-4">
@@ -66,7 +84,7 @@ const DiscordLogin: React.FC<DiscordLoginProps> = ({ onLogin, onBack }) => {
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
           ) : (
-            "Login with Discord"
+            isConfigured ? "Connect with Discord" : "Start Simulation"
           )}
         </button>
         
@@ -77,12 +95,6 @@ const DiscordLogin: React.FC<DiscordLoginProps> = ({ onLogin, onBack }) => {
           Abort Authentication
         </button>
       </div>
-      
-      {!isSupabaseConfigured() && (
-        <p className="mt-8 text-[9px] text-slate-700 italic">
-          Running in simulation mode. Connect Supabase & Discord API for full integration.
-        </p>
-      )}
     </div>
   );
 };
