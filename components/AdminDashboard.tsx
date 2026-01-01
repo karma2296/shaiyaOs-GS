@@ -1,6 +1,8 @@
 
 import React, { useState } from 'react';
 import { GSApplication } from '../types';
+import { supabase, isSupabaseConfigured } from '../supabaseClient';
+import { sendAcceptanceWebhook } from '../discordService';
 
 interface AdminDashboardProps {
   applications: GSApplication[];
@@ -14,6 +16,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ applications, onBack, o
   const [selectedApp, setSelectedApp] = useState<GSApplication | null>(null);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +31,58 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ applications, onBack, o
   const handleManualRefresh = async () => {
     setRefreshing(true);
     await onRefresh();
-    setTimeout(() => setRefreshing(false), 1000);
+    setRefreshing(false);
+  };
+
+  const handleApprove = async () => {
+    if (!selectedApp || !isSupabaseConfigured()) return;
+    
+    if (!confirm(`¿Estás seguro de que quieres ACEPTAR a ${selectedApp.characterName}? Se enviará una notificación a Discord.`)) return;
+
+    setActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from('gs_applications')
+        .update({ status: 'accepted' })
+        .eq('id', selectedApp.id);
+
+      if (error) throw error;
+
+      // Enviar webhook de aceptación
+      await sendAcceptanceWebhook(selectedApp);
+      
+      alert(`¡${selectedApp.characterName} ha sido aceptado y notificado!`);
+      await onRefresh();
+      setSelectedApp(null);
+    } catch (err: any) {
+      alert("Error al aprobar: " + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!selectedApp || !isSupabaseConfigured()) return;
+
+    if (!confirm(`¿Deseas ELIMINAR permanentemente la solicitud de ${selectedApp.characterName}? Esta acción no se puede deshacer.`)) return;
+
+    setActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from('gs_applications')
+        .delete()
+        .eq('id', selectedApp.id);
+
+      if (error) throw error;
+
+      alert("Solicitud eliminada de los registros.");
+      await onRefresh();
+      setSelectedApp(null);
+    } catch (err: any) {
+      alert("Error al eliminar: " + err.message);
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   if (!isAuthenticated) {
@@ -121,6 +175,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ applications, onBack, o
                       <span className="text-[8px] font-bold text-[#c5a059]">{app.aiScore}%</span>
                     </div>
                     <div className="text-[9px] text-slate-600 font-gothic uppercase tracking-widest truncate">{app.discordTag}</div>
+                    {app.status === 'accepted' && (
+                      <span className="text-[7px] text-emerald-500 uppercase font-bold tracking-tighter">✔ Accepted</span>
+                    )}
                   </div>
                   {selectedApp?.id === app.id && <div className="absolute top-0 right-0 w-1 h-full bg-[#c5a059]"></div>}
                 </button>
@@ -185,7 +242,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ applications, onBack, o
                     <h4 className="text-xs font-fantasy gold-text uppercase text-center mb-8 tracking-[0.4em] opacity-50 underline underline-offset-8">Trials Record</h4>
                     
                     <div className="space-y-3">
-                      <h4 className="text-[10px] font-gothic text-slate-500 uppercase tracking-widest">Trial 1: Chat Escalation</h4>
+                      <h4 className="text-[10px] font-gothic text-slate-500 uppercase tracking-widest">Trial 1: Conflict Management</h4>
                       <p className="text-slate-300 text-sm font-gothic italic bg-black/40 p-5 border-l border-[#c5a059]/30 leading-relaxed">"{selectedApp.conflictScenario}"</p>
                     </div>
                     <div className="space-y-3">
@@ -208,11 +265,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ applications, onBack, o
                 </div>
 
                 <div className="flex gap-4 pt-10 sticky bottom-0 bg-black/80 backdrop-blur-md py-6 border-t border-[#c5a059]/20">
-                  <button className="flex-1 py-4 bg-emerald-950/30 hover:bg-emerald-900/40 border border-emerald-900/50 text-emerald-400 font-fantasy uppercase tracking-widest transition-all">
-                    Approve Candidate
+                  <button 
+                    onClick={handleApprove}
+                    disabled={actionLoading}
+                    className="flex-1 py-4 bg-emerald-950/30 hover:bg-emerald-900/40 border border-emerald-900/50 text-emerald-400 font-fantasy uppercase tracking-widest transition-all disabled:opacity-50"
+                  >
+                    {actionLoading ? 'Processing...' : 'Approve Candidate'}
                   </button>
-                  <button className="flex-1 py-4 bg-red-950/30 hover:bg-red-900/40 border border-red-900/50 text-red-400 font-fantasy uppercase tracking-widest transition-all">
-                    Reject Petition
+                  <button 
+                    onClick={handleReject}
+                    disabled={actionLoading}
+                    className="flex-1 py-4 bg-red-950/30 hover:bg-red-900/40 border border-red-900/50 text-red-400 font-fantasy uppercase tracking-widest transition-all disabled:opacity-50"
+                  >
+                    {actionLoading ? 'Processing...' : 'Reject Petition'}
                   </button>
                 </div>
               </div>
