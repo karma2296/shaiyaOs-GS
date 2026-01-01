@@ -18,6 +18,7 @@
       background-color: #050507;
       color: #e2e8f0;
       overflow-x: hidden;
+      margin: 0;
     }
     .font-fantasy {
       font-family: 'Cinzel Decorative', cursive;
@@ -38,13 +39,6 @@
     .shaiya-border {
       border: 1px solid var(--shaiya-gold);
       position: relative;
-    }
-    .shaiya-border::before {
-      content: '';
-      position: absolute;
-      top: -2px; left: -2px; right: -2px; bottom: -2px;
-      border: 1px solid rgba(197, 160, 89, 0.3);
-      pointer-events: none;
     }
     .gold-text {
       color: var(--shaiya-gold);
@@ -92,10 +86,10 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
 </head>
 <body class="bg-shaiya-gradient min-h-screen">
   <div id="root"></div>
-<script type="module" src="/index.tsx"></script>
+  <!-- Esta línea es CRUCIAL para que el programa cargue -->
+  <script type="module" src="./index.tsx"></script>
 </body>
 </html>

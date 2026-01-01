@@ -2,10 +2,16 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { GSApplication } from "./types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 export const analyzeApplication = async (app: Partial<GSApplication>) => {
+  const apiKey = process.env.API_KEY;
+  
+  if (!apiKey) {
+    console.warn("API_KEY no configurada en Vercel. Saltando análisis de IA.");
+    return { score: 50, summary: "AI analysis skipped: API key not configured." };
+  }
+
   try {
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Analyze this application for the Game Sage (GS) position in the Shaiya OS MMORPG server.
