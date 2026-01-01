@@ -39,7 +39,8 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({ user, onSubmit, onCan
     const newApp: GSApplication = {
       id: Math.random().toString(36).substring(7),
       userId: user.id,
-      discordTag: `${user.username}#${user.discriminator}`,
+      discordTag: user.discriminator !== '0000' ? `${user.username}#${user.discriminator}` : user.username,
+      discordAvatar: user.avatar,
       ...formData,
       status: 'pending',
       aiScore: analysis.score,
@@ -56,12 +57,12 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({ user, onSubmit, onCan
       <div className="bg-[#101018] p-8 border-b border-[#c5a059]/20 flex items-center justify-between">
         <div className="flex items-center gap-5">
           <div className="relative">
-            <img src={user.avatar} alt="Avatar" className="w-16 h-16 rounded-none border border-[#c5a059] shadow-lg" />
+            <img src={user.avatar} alt="Avatar" className="w-16 h-16 rounded-none border border-[#c5a059] shadow-lg object-cover" />
             <div className="absolute -bottom-1 -right-1 bg-[#c5a059] w-4 h-4 border border-black"></div>
           </div>
           <div>
             <h2 className="text-2xl font-fantasy font-bold gold-text tracking-wide uppercase">GS Application Form</h2>
-            <p className="text-slate-500 font-gothic text-sm">{user.username}#{user.discriminator}</p>
+            <p className="text-slate-500 font-gothic text-sm">{user.username}</p>
           </div>
         </div>
         <button onClick={onCancel} className="text-slate-600 hover:text-[#c5a059] transition-colors p-2">

@@ -106,25 +106,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ applications, onBack, o
                 <button
                   key={app.id}
                   onClick={() => setSelectedApp(app)}
-                  className={`w-full text-left p-6 rounded-none border transition-all relative overflow-hidden group ${
+                  className={`w-full text-left p-4 rounded-none border transition-all relative overflow-hidden group flex items-center gap-4 ${
                     selectedApp?.id === app.id 
                       ? 'bg-[#101018] border-[#c5a059] shadow-[0_0_20px_rgba(197,160,89,0.1)]' 
                       : 'bg-black/40 border-slate-800 hover:border-slate-600'
                   }`}
                 >
-                  <div className="flex justify-between items-start mb-1">
-                    <span className={`font-fantasy text-lg ${selectedApp?.id === app.id ? 'gold-text' : 'text-slate-300'}`}>
-                      {app.characterName}
-                    </span>
-                    <span className={`text-[9px] px-2 py-1 rounded-sm font-bold uppercase ${
-                      (app.aiScore || 0) > 75 ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-900' : 'bg-slate-900 text-slate-400 border border-slate-800'
-                    }`}>
-                      Score: {app.aiScore}%
-                    </span>
-                  </div>
-                  <div className="text-[10px] text-slate-600 font-gothic uppercase tracking-widest mb-3">{app.discordTag}</div>
-                  <div className="text-[9px] text-slate-700 font-gothic uppercase">
-                    Received: {new Date(app.submittedAt).toLocaleDateString()}
+                  <img src={app.discordAvatar} alt="" className="w-12 h-12 object-cover border border-[#c5a059]/30" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start mb-1">
+                      <span className={`font-fantasy text-base truncate ${selectedApp?.id === app.id ? 'gold-text' : 'text-slate-300'}`}>
+                        {app.characterName}
+                      </span>
+                      <span className="text-[8px] font-bold text-[#c5a059]">{app.aiScore}%</span>
+                    </div>
+                    <div className="text-[9px] text-slate-600 font-gothic uppercase tracking-widest truncate">{app.discordTag}</div>
                   </div>
                   {selectedApp?.id === app.id && <div className="absolute top-0 right-0 w-1 h-full bg-[#c5a059]"></div>}
                 </button>
@@ -137,36 +133,38 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ applications, onBack, o
             {selectedApp ? (
               <div className="glass-morphism p-10 rounded-none border-[#c5a059]/30 space-y-10 animate-in slide-in-from-right-4 duration-500 max-h-[85vh] overflow-y-auto custom-scrollbar">
                 <div className="flex flex-col md:flex-row justify-between items-start gap-6 border-b border-[#c5a059]/10 pb-8">
-                  <div>
-                    <h3 className="text-3xl font-fantasy gold-text uppercase tracking-tight">{selectedApp.characterName}</h3>
-                    <p className="text-slate-500 font-gothic text-sm tracking-widest">{selectedApp.discordTag}</p>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="text-center px-4 py-2 border border-slate-800 bg-black/40">
-                      <div className="text-[8px] text-slate-600 uppercase font-gothic tracking-tighter">AI Appraisal</div>
-                      <div className={`font-fantasy text-xl ${selectedApp.aiScore! > 70 ? 'text-emerald-500' : 'text-amber-500'}`}>{selectedApp.aiScore}%</div>
+                  <div className="flex items-center gap-6">
+                    <img src={selectedApp.discordAvatar} alt="" className="w-24 h-24 object-cover border-2 border-[#c5a059]" />
+                    <div>
+                      <h3 className="text-3xl font-fantasy gold-text uppercase tracking-tight">{selectedApp.characterName}</h3>
+                      <p className="text-slate-500 font-gothic text-sm tracking-widest">Discord: {selectedApp.discordTag}</p>
+                      <p className="text-[10px] text-slate-600 mt-2 uppercase tracking-widest">Submitted: {new Date(selectedApp.submittedAt).toLocaleString()}</p>
                     </div>
+                  </div>
+                  <div className="text-center px-6 py-4 border border-[#c5a059]/30 bg-[#c5a059]/5">
+                    <div className="text-[10px] text-[#c5a059] uppercase font-gothic tracking-widest mb-1">AI Oracle Score</div>
+                    <div className="font-fantasy text-4xl gold-text">{selectedApp.aiScore}%</div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                  <div className="space-y-1">
-                    <div className="text-[9px] text-slate-600 uppercase font-gothic tracking-widest">Age</div>
-                    <div className="text-slate-200 font-gothic text-lg">{selectedApp.age}</div>
+                  <div className="space-y-1 bg-white/5 p-4 border border-white/10">
+                    <div className="text-[9px] text-slate-500 uppercase font-gothic tracking-widest">Age</div>
+                    <div className="text-slate-200 font-gothic text-lg">{selectedApp.age} years</div>
                   </div>
-                  <div className="space-y-1">
-                    <div className="text-[9px] text-slate-600 uppercase font-gothic tracking-widest">Timezone</div>
+                  <div className="space-y-1 bg-white/5 p-4 border border-white/10">
+                    <div className="text-[9px] text-slate-500 uppercase font-gothic tracking-widest">Timezone</div>
                     <div className="text-slate-200 font-gothic text-lg">{selectedApp.timezone}</div>
                   </div>
-                  <div className="space-y-1">
-                    <div className="text-[9px] text-slate-600 uppercase font-gothic tracking-widest">Presence</div>
+                  <div className="space-y-1 bg-white/5 p-4 border border-white/10">
+                    <div className="text-[9px] text-slate-500 uppercase font-gothic tracking-widest">Availability</div>
                     <div className="text-slate-200 font-gothic text-lg">{selectedApp.hoursPerDay}</div>
                   </div>
                 </div>
 
                 <div className="space-y-10">
-                  <div className="bg-[#c5a059]/5 border border-[#c5a059]/20 p-6 relative">
-                     <div className="absolute -top-3 left-4 bg-[#050507] px-3 py-1 border border-[#c5a059]/30 text-[9px] font-fantasy gold-text uppercase">AI Oracle Assessment</div>
+                  <div className="bg-[#c5a059]/5 border border-[#c5a059]/20 p-8 relative">
+                     <div className="absolute -top-3 left-4 bg-[#050507] px-3 py-1 border border-[#c5a059]/30 text-[9px] font-fantasy gold-text uppercase">AI Logic Assessment</div>
                     <p className="text-slate-300 text-sm italic leading-relaxed font-gothic">
                       "{selectedApp.aiSummary}"
                     </p>
@@ -174,47 +172,47 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ applications, onBack, o
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <div className="space-y-3">
-                      <h4 className="text-xs font-fantasy gold-text uppercase border-l-2 border-[#c5a059] pl-3">Staff History</h4>
-                      <p className="text-slate-400 text-sm font-gothic leading-relaxed">{selectedApp.experience}</p>
+                      <h4 className="text-xs font-fantasy gold-text uppercase border-l-2 border-[#c5a059] pl-3">Previous Experience</h4>
+                      <p className="text-slate-400 text-sm font-gothic leading-relaxed whitespace-pre-wrap">{selectedApp.experience}</p>
                     </div>
                     <div className="space-y-3">
-                      <h4 className="text-xs font-fantasy gold-text uppercase border-l-2 border-[#c5a059] pl-3">Vision for Shaiya OS</h4>
-                      <p className="text-slate-400 text-sm font-gothic leading-relaxed">{selectedApp.contribution}</p>
+                      <h4 className="text-xs font-fantasy gold-text uppercase border-l-2 border-[#c5a059] pl-3">Staff Contribution</h4>
+                      <p className="text-slate-400 text-sm font-gothic leading-relaxed whitespace-pre-wrap">{selectedApp.contribution}</p>
                     </div>
                   </div>
 
-                  <div className="space-y-8 bg-black/40 p-8 border border-slate-900">
-                    <h4 className="text-xs font-fantasy gold-text uppercase text-center mb-4 opacity-50">Trial Logs</h4>
+                  <div className="space-y-8 bg-black/60 p-8 border border-slate-800">
+                    <h4 className="text-xs font-fantasy gold-text uppercase text-center mb-8 tracking-[0.4em] opacity-50 underline underline-offset-8">Trials Record</h4>
                     
                     <div className="space-y-3">
-                      <h4 className="text-[10px] font-gothic text-slate-600 uppercase tracking-widest">1. Chat Conflict</h4>
-                      <p className="text-slate-300 text-sm font-gothic italic bg-black/20 p-4 border-l border-slate-800 leading-relaxed">"{selectedApp.conflictScenario}"</p>
+                      <h4 className="text-[10px] font-gothic text-slate-500 uppercase tracking-widest">Trial 1: Chat Escalation</h4>
+                      <p className="text-slate-300 text-sm font-gothic italic bg-black/40 p-5 border-l border-[#c5a059]/30 leading-relaxed">"{selectedApp.conflictScenario}"</p>
                     </div>
                     <div className="space-y-3">
-                      <h4 className="text-[10px] font-gothic text-slate-600 uppercase tracking-widest">2. Investigation</h4>
-                      <p className="text-slate-300 text-sm font-gothic italic bg-black/20 p-4 border-l border-slate-800 leading-relaxed">"{selectedApp.hackerScenario}"</p>
+                      <h4 className="text-[10px] font-gothic text-slate-500 uppercase tracking-widest">Trial 2: Anti-Cheat Inquiry</h4>
+                      <p className="text-slate-300 text-sm font-gothic italic bg-black/40 p-5 border-l border-[#c5a059]/30 leading-relaxed">"{selectedApp.hackerScenario}"</p>
                     </div>
                     <div className="space-y-3">
-                      <h4 className="text-[10px] font-gothic text-slate-600 uppercase tracking-widest">3. Staff Ethics</h4>
-                      <p className="text-slate-300 text-sm font-gothic italic bg-black/20 p-4 border-l border-slate-800 leading-relaxed">"{selectedApp.ethicsScenario}"</p>
+                      <h4 className="text-[10px] font-gothic text-slate-500 uppercase tracking-widest">Trial 3: Professional Ethics</h4>
+                      <p className="text-slate-300 text-sm font-gothic italic bg-black/40 p-5 border-l border-[#c5a059]/30 leading-relaxed">"{selectedApp.ethicsScenario}"</p>
                     </div>
                     <div className="space-y-3">
-                      <h4 className="text-[10px] font-gothic text-slate-600 uppercase tracking-widest">4. Prioritization</h4>
-                      <p className="text-slate-300 text-sm font-gothic italic bg-black/20 p-4 border-l border-slate-800 leading-relaxed">"{selectedApp.pressureScenario}"</p>
+                      <h4 className="text-[10px] font-gothic text-slate-500 uppercase tracking-widest">Trial 4: Stress Response</h4>
+                      <p className="text-slate-300 text-sm font-gothic italic bg-black/40 p-5 border-l border-[#c5a059]/30 leading-relaxed">"{selectedApp.pressureScenario}"</p>
                     </div>
                     <div className="space-y-3">
-                      <h4 className="text-[10px] font-gothic text-slate-600 uppercase tracking-widest">5. Crisis Communication</h4>
-                      <p className="text-slate-300 text-sm font-gothic italic bg-black/20 p-4 border-l border-slate-800 leading-relaxed">"{selectedApp.communicationScenario}"</p>
+                      <h4 className="text-[10px] font-gothic text-slate-500 uppercase tracking-widest">Trial 5: Crisis Comms</h4>
+                      <p className="text-slate-300 text-sm font-gothic italic bg-black/40 p-5 border-l border-[#c5a059]/30 leading-relaxed">"{selectedApp.communicationScenario}"</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex gap-4 pt-10 sticky bottom-0 bg-black py-4 border-t border-[#c5a059]/10">
-                  <button className="flex-1 py-4 bg-emerald-900/20 hover:bg-emerald-900/40 border border-emerald-900/50 text-emerald-400 font-fantasy uppercase tracking-widest transition-all">
-                    Initiate Member
+                <div className="flex gap-4 pt-10 sticky bottom-0 bg-black/80 backdrop-blur-md py-6 border-t border-[#c5a059]/20">
+                  <button className="flex-1 py-4 bg-emerald-950/30 hover:bg-emerald-900/40 border border-emerald-900/50 text-emerald-400 font-fantasy uppercase tracking-widest transition-all">
+                    Approve Candidate
                   </button>
-                  <button className="flex-1 py-4 bg-red-900/20 hover:bg-red-900/40 border border-red-900/50 text-red-400 font-fantasy uppercase tracking-widest transition-all">
-                    Banish Application
+                  <button className="flex-1 py-4 bg-red-950/30 hover:bg-red-900/40 border border-red-900/50 text-red-400 font-fantasy uppercase tracking-widest transition-all">
+                    Reject Petition
                   </button>
                 </div>
               </div>
@@ -225,7 +223,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ applications, onBack, o
                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                   </svg>
                 </div>
-                <p className="text-slate-600 font-gothic uppercase text-xs tracking-widest">Select a petition from the scrolls to begin review.</p>
+                <p className="text-slate-600 font-gothic uppercase text-xs tracking-widest">Select a scroll to examine the applicant's record.</p>
               </div>
             )}
           </div>

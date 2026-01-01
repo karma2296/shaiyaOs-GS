@@ -15,6 +15,24 @@ const App: React.FC = () => {
   const [applications, setApplications] = useState<GSApplication[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Escuchar si el usuario inicia sesión vía Supabase OAuth
+  useEffect(() => {
+    if (isSupabaseConfigured() && supabase) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) {
+          const u = session.user;
+          setUser({
+            id: u.id,
+            username: u.user_metadata.full_name || u.user_metadata.custom_claims?.global_name || u.email?.split('@')[0] || 'Unknown',
+            discriminator: '0000',
+            avatar: u.user_metadata.avatar_url || `https://ui-avatars.com/api/?name=${u.email}&background=random`
+          });
+          setView('form');
+        }
+      });
+    }
+  }, []);
+
   const fetchApplications = async () => {
     if (!isSupabaseConfigured() || !supabase) {
       const saved = localStorage.getItem('shaiya_apps');
@@ -34,6 +52,7 @@ const App: React.FC = () => {
         id: app.id,
         userId: app.user_id,
         discordTag: app.discord_tag,
+        discordAvatar: app.discord_avatar || '',
         characterName: app.character_name,
         age: app.age,
         timezone: app.timezone,
@@ -74,6 +93,7 @@ const App: React.FC = () => {
         const { error } = await supabase.from('gs_applications').insert([{
           user_id: app.userId,
           discord_tag: app.discordTag,
+          discord_avatar: app.discordAvatar,
           character_name: app.characterName,
           age: app.age,
           timezone: app.timezone,
@@ -107,7 +127,7 @@ const App: React.FC = () => {
         <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-center justify-center">
           <div className="text-center">
             <div className="w-20 h-20 border-b-2 border-[#c5a059] rounded-full animate-spin mb-6 mx-auto"></div>
-            <p className="font-fantasy gold-text text-2xl tracking-[0.3em] animate-pulse">Consulting the AI Oracle...</p>
+            <p className="font-fantasy gold-text text-2xl tracking-[0.3em] animate-pulse">Processing Scroll...</p>
           </div>
         </div>
       )}

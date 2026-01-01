@@ -10,6 +10,7 @@ export interface GSApplication {
   id: string;
   userId: string;
   discordTag: string;
+  discordAvatar: string; // Nueva propiedad
   characterName: string;
   age: number;
   timezone: string;
