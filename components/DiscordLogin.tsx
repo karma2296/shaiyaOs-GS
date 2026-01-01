@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { supabase, isSupabaseConfigured } from '../supabaseClient';
+import { supabase, isSupabaseConfigured, getSafeEnv } from '../supabaseClient';
 
 interface DiscordLoginProps {
   onBack: () => void;
@@ -11,17 +11,15 @@ const DiscordLogin: React.FC<DiscordLoginProps> = ({ onBack }) => {
   const [showHelp, setShowHelp] = useState(false);
   const configured = isSupabaseConfigured();
 
-  // Función para construir la URL de callback probable de Supabase
   const getCallbackUrl = () => {
-    const env = (import.meta as any).env || {};
-    const url = env.VITE_SUPABASE_URL || '';
-    if (!url || url.includes('placeholder')) return 'https://TU_PROYECTO.supabase.co/auth/v1/callback';
+    const url = getSafeEnv('SUPABASE_URL');
+    if (!url || url.includes('placeholder')) return 'https://TU-PROYECTO.supabase.co/auth/v1/callback';
     return `${url}/auth/v1/callback`;
   };
 
   const handleLoginAction = async () => {
     if (!configured) {
-      alert("⚠️ Error: Configura primero las variables VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en Vercel.");
+      setShowHelp(true);
       return;
     }
 
@@ -35,13 +33,9 @@ const DiscordLogin: React.FC<DiscordLoginProps> = ({ onBack }) => {
         }
       });
       
-      if (error) {
-        console.error("Auth error:", error);
-        setShowHelp(true);
-        setLoading(false);
-      }
+      if (error) throw error;
     } catch (err: any) {
-      console.error("Critical Auth Error:", err);
+      console.error("Auth error:", err);
       setShowHelp(true);
       setLoading(false);
     }
@@ -59,72 +53,35 @@ const DiscordLogin: React.FC<DiscordLoginProps> = ({ onBack }) => {
       
       {showHelp ? (
         <div className="bg-amber-900/20 border border-amber-900/50 p-5 mb-8 text-left">
-          <p className="text-amber-400 text-xs font-bold uppercase mb-3">🛠️ Error de Redirección OAuth2</p>
+          <p className="text-amber-400 text-xs font-bold uppercase mb-3">🛠️ Error detectado</p>
           <p className="text-slate-400 text-[10px] leading-relaxed mb-4">
-            Discord rechaza la conexión porque la URL no está autorizada. Haz esto:
+            Parece que falta configuración. Revisa esto:
           </p>
           <ol className="text-[10px] text-slate-300 space-y-3 list-decimal pl-4 font-gothic">
-            <li>Ve al <strong>Discord Developer Portal</strong> -> Tu App -> OAuth2.</li>
-            <li>En <strong>Redirects</strong>, añade esta URL exactamente:
+            <li><strong>Vercel:</strong> Renombra variables a <code className="text-amber-200">VITE_SUPABASE_URL</code> y haz Redeploy.</li>
+            <li><strong>Discord Dev:</strong> Añade este Redirect URI:
               <div className="mt-2 p-2 bg-black/60 border border-amber-900/30 font-mono text-[9px] break-all select-all text-amber-200">
                 {getCallbackUrl()}
               </div>
             </li>
-            <li>En <strong>Supabase Dashboard</strong> -> Authentication -> URL Configuration:
-              <ul className="mt-1 list-disc pl-4 text-slate-400">
-                <li>Site URL: <code className="text-slate-200">{window.location.origin}</code></li>
-              </ul>
-            </li>
           </ol>
-          <button 
-            onClick={() => setShowHelp(false)}
-            className="mt-6 w-full py-2 bg-amber-900/40 hover:bg-amber-900/60 text-amber-100 text-[10px] uppercase tracking-widest font-bold transition-colors"
-          >
-            Intentar de nuevo
-          </button>
-        </div>
-      ) : !configured ? (
-        <div className="bg-red-900/20 border border-red-900/50 p-4 mb-8 text-left">
-          <p className="text-red-400 text-xs font-bold uppercase mb-2">⚠️ Error de Configuración</p>
-          <p className="text-slate-400 text-[10px] leading-relaxed mb-4">
-            Asegúrate de renombrar las variables en Vercel con el prefijo <strong>VITE_</strong>.
-          </p>
-          <ul className="text-[9px] text-slate-500 space-y-1 font-mono">
-            <li>1. <span className="text-slate-300">VITE_SUPABASE_URL</span></li>
-            <li>2. <span className="text-slate-300">VITE_SUPABASE_ANON_KEY</span></li>
-            <li>3. Pulsa <strong>Redeploy</strong> en Vercel.</li>
-          </ul>
+          <button onClick={() => setShowHelp(false)} className="mt-6 w-full py-2 bg-amber-900/40 text-amber-100 text-[10px] uppercase font-bold">Entendido</button>
         </div>
       ) : (
         <p className="text-slate-500 mb-10 font-gothic text-sm leading-relaxed max-w-xs mx-auto">
-          Verifica tu identidad mediante los archivos de Discord para acceder a los pergaminos de reclutamiento.
+          Inicia sesión con Discord para que tu identidad quede vinculada oficialmente a tu solicitud de Game Sage.
         </p>
       )}
       
       <div className="space-y-4">
         <button
           onClick={handleLoginAction}
-          disabled={loading || !configured}
-          className="w-full flex items-center justify-center gap-3 py-5 px-6 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded-sm transition-all disabled:opacity-30 disabled:grayscale font-gothic text-sm shadow-xl active:scale-95 group"
+          disabled={loading}
+          className="w-full flex items-center justify-center gap-3 py-5 px-6 bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold rounded-sm transition-all disabled:opacity-30 font-gothic text-sm shadow-xl"
         >
-          {loading ? (
-            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-          ) : (
-            <>
-              <span>{configured ? 'Login with Discord' : 'System Locked'}</span>
-              <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </>
-          )}
+          {loading ? "Connecting..." : "Login with Discord"}
         </button>
-        
-        <button
-          onClick={onBack}
-          className="w-full py-2 text-slate-600 hover:text-slate-400 transition-colors text-[10px] uppercase tracking-[0.3em] font-gothic"
-        >
-          Abort Authentication
-        </button>
+        <button onClick={onBack} className="w-full py-2 text-slate-600 hover:text-slate-400 text-[10px] uppercase tracking-[0.3em]">Cancelar</button>
       </div>
     </div>
   );

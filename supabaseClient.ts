@@ -1,25 +1,29 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const getEnv = (key: string): string => {
-  const env = (import.meta as any).env || {};
-  const proc = (typeof process !== 'undefined' ? process.env : {}) as any;
-  
-  // En Vercel/Vite, las variables de cliente DEBEN empezar por VITE_
-  return (
-    env[`VITE_${key}`] || 
-    proc[`VITE_${key}`] ||
-    env[key] || 
-    proc[key] ||
-    ''
-  );
+// Función ultra-segura para obtener variables de entorno en cualquier navegador
+export const getSafeEnv = (key: string): string => {
+  try {
+    // Intentar VITE_ primero (estándar de Vercel/Vite para cliente)
+    const viteKey = `VITE_${key}`;
+    
+    // @ts-ignore
+    const env = (import.meta as any).env || {};
+    // @ts-ignore
+    const proc = (typeof process !== 'undefined' ? process.env : {}) as any;
+
+    return env[viteKey] || proc[viteKey] || env[key] || proc[key] || '';
+  } catch (e) {
+    return '';
+  }
 };
 
-const supabaseUrl = getEnv('SUPABASE_URL');
-const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY');
+const supabaseUrl = getSafeEnv('SUPABASE_URL');
+const supabaseAnonKey = getSafeEnv('SUPABASE_ANON_KEY');
 
+// Cliente de Supabase con fallback para evitar errores de inicialización
 export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseUrl || 'https://placeholder-project.supabase.co',
   supabaseAnonKey || 'placeholder-key'
 );
 

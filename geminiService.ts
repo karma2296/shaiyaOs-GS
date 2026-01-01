@@ -4,8 +4,16 @@ import { GSApplication } from "./types";
 
 export const analyzeApplication = async (app: Partial<GSApplication>) => {
   try {
-    // Initializing the GoogleGenAI client with process.env.API_KEY directly
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    // Obtenemos la API_KEY de forma segura
+    let apiKey = '';
+    try { apiKey = process.env.API_KEY || ''; } catch (e) { /* fallback */ }
+    
+    if (!apiKey) {
+      console.warn("IA Sentinel: API_KEY no detectada. Usando evaluación por defecto.");
+      return { score: 75, summary: "Evaluación automática: Candidato apto para revisión manual. (IA no disponible)" };
+    }
+
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Analyze this application for the Game Sage (GS) position in the Shaiya OS MMORPG server.
@@ -21,13 +29,8 @@ export const analyzeApplication = async (app: Partial<GSApplication>) => {
       - Communication Scenario: ${app.communicationScenario}
       - Potential Contribution: ${app.contribution}
 
-      Evaluate the candidate based on:
-      1. Professional maturity and objective decision-making.
-      2. Game knowledge and technical logic.
-      3. Conflict resolution and crisis communication.
-      4. Integrity, staff ethics, and prioritization skills.
-
-      Provide a JSON object with a 'score' (0-100) and a 'summary' (professional assessment in English).`,
+      Evaluate based on: Maturity, Game Knowledge, Ethics, and Stress Management.
+      Provide a JSON object with 'score' (0-100) and 'summary' (professional assessment in Spanish).`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -41,11 +44,10 @@ export const analyzeApplication = async (app: Partial<GSApplication>) => {
       },
     });
 
-    // Accessing the generated text using the .text property
     const jsonStr = response.text?.trim() || "{}";
     return JSON.parse(jsonStr);
   } catch (error) {
     console.error("Error analyzing application:", error);
-    return { score: 0, summary: "AI analysis could not be performed at this time." };
+    return { score: 50, summary: "Error técnico en el Oráculo. Se requiere revisión manual del Gran Consejo." };
   }
 };
