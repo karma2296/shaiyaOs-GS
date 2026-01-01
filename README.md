@@ -1,1 +1,0 @@
-# shaiyaOs-GS
