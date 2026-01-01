@@ -7,7 +7,7 @@ import ApplicationForm from './components/ApplicationForm';
 import SuccessPage from './components/SuccessPage';
 import AdminDashboard from './components/AdminDashboard';
 import { Layout } from './components/Layout';
-import { supabase } from './supabaseClient';
+import { supabase, isSupabaseConfigured } from './supabaseClient';
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>('landing');
@@ -17,7 +17,10 @@ const App: React.FC = () => {
 
   // Gestión de sesión real de Supabase
   useEffect(() => {
-    if (!supabase) return;
+    if (!isSupabaseConfigured()) {
+      console.warn("Supabase is not configured. Real-time auth will not work.");
+      return;
+    }
 
     const handleAuth = (session: any) => {
       if (session?.user) {
@@ -38,6 +41,8 @@ const App: React.FC = () => {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       handleAuth(session);
+    }).catch(err => {
+      console.error("Session error:", err.message || err);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -48,7 +53,10 @@ const App: React.FC = () => {
   }, []);
 
   const fetchApplications = async () => {
-    if (!supabase) return;
+    if (!isSupabaseConfigured()) {
+      console.warn("Fetch skipped: Supabase not configured.");
+      return;
+    }
 
     try {
       const { data, error } = await supabase
@@ -56,7 +64,15 @@ const App: React.FC = () => {
         .select('*')
         .order('submitted_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        // If the table doesn't exist yet, we handle it gracefully
+        if (error.code === 'PGRST116' || error.message.includes('not found')) {
+          console.info("Applications table might not exist yet. Check Supabase setup.");
+          setApplications([]);
+          return;
+        }
+        throw error;
+      }
       
       const mappedData: GSApplication[] = (data || []).map((app: any) => ({
         id: app.id,
@@ -81,8 +97,14 @@ const App: React.FC = () => {
       }));
 
       setApplications(mappedData);
-    } catch (err) {
-      console.error("Cloud fetch error:", err);
+    } catch (err: any) {
+      // Better error reporting to avoid [object Object]
+      const errorMsg = err.message || (typeof err === 'string' ? err : JSON.stringify(err));
+      console.error("Cloud fetch error:", errorMsg);
+      
+      if (errorMsg.includes('failed to fetch') || errorMsg.includes('NetworkError')) {
+        console.error("Network error detected. Check your Supabase URL or internet connection.");
+      }
     }
   };
 
@@ -93,7 +115,7 @@ const App: React.FC = () => {
   const handleSubmitApplication = async (app: GSApplication) => {
     setLoading(true);
     
-    if (supabase) {
+    if (isSupabaseConfigured()) {
       try {
         const { error } = await supabase.from('gs_applications').insert([{
           user_id: app.userId,
@@ -116,9 +138,13 @@ const App: React.FC = () => {
           submitted_at: app.submittedAt
         }]);
         if (error) throw error;
-      } catch (err) {
-        console.error("Database error:", err);
+      } catch (err: any) {
+        console.error("Database error:", err.message || err);
+        alert("Error saving application: " + (err.message || "Unknown error"));
       }
+    } else {
+      console.error("Cannot submit: Supabase not configured.");
+      alert("System not configured. Please contact administration.");
     }
 
     await fetchApplications();
@@ -137,7 +163,7 @@ const App: React.FC = () => {
         </div>
       )}
       {view === 'landing' && <LandingPage onStart={() => setView('login')} onAdmin={() => setView('admin')} />}
-      {view === 'login' && <DiscordLogin onLogin={() => {}} onBack={() => setView('landing')} />}
+      {view === 'login' && <DiscordLogin onBack={() => setView('landing')} />}
       {view === 'form' && user && <ApplicationForm user={user} onSubmit={handleSubmitApplication} onCancel={() => setView('landing')} />}
       {view === 'success' && <SuccessPage onReturn={() => setView('landing')} />}
       {view === 'admin' && <AdminDashboard applications={applications} onBack={() => setView('landing')} onRefresh={fetchApplications} />}

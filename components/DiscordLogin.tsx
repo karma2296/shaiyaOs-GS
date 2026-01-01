@@ -1,10 +1,8 @@
 
 import React, { useState } from 'react';
-import { DiscordUser } from '../types';
 import { supabase } from '../supabaseClient';
 
 interface DiscordLoginProps {
-  onLogin: (user: DiscordUser) => void;
   onBack: () => void;
 }
 
@@ -12,13 +10,9 @@ const DiscordLogin: React.FC<DiscordLoginProps> = ({ onBack }) => {
   const [loading, setLoading] = useState(false);
 
   const handleLoginAction = async () => {
-    if (!supabase) {
-      alert("System Configuration Error: Supabase keys not detected in environment.");
-      return;
-    }
-    
     setLoading(true);
     try {
+      // Intentamos el login directamente sin comprobaciones previas
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'discord',
         options: {
@@ -26,10 +20,19 @@ const DiscordLogin: React.FC<DiscordLoginProps> = ({ onBack }) => {
           scopes: 'identify email'
         }
       });
-      if (error) throw error;
+      
+      if (error) {
+        // Si falla por falta de configuración, damos un mensaje más útil
+        if (error.message.includes('apiKey') || error.message.includes('url')) {
+          alert("Error de Conexión: Las llaves de Supabase no parecen estar llegando al navegador. Por favor, asegúrate de que las variables SUPABASE_URL y SUPABASE_ANON_KEY estén guardadas en el panel y refresca la página.");
+        } else {
+          alert(`Error: ${error.message}`);
+        }
+        setLoading(false);
+      }
     } catch (err: any) {
-      console.error("Discord Auth Error:", err);
-      alert(`Error de conexión: ${err.message}`);
+      console.error("Critical Auth Error:", err);
+      alert("Error crítico al conectar con el servidor de autenticación.");
       setLoading(false);
     }
   };
@@ -45,7 +48,7 @@ const DiscordLogin: React.FC<DiscordLoginProps> = ({ onBack }) => {
       <h2 className="text-2xl font-fantasy gold-text mb-4 uppercase tracking-[0.2em]">Council Verification</h2>
       
       <p className="text-slate-500 mb-10 font-gothic text-sm leading-relaxed max-w-xs mx-auto">
-        Conecta tu cuenta de Discord para verificar tu identidad ante el consejo de Shaiya OS.
+        Verifica tu identidad mediante los archivos de Discord para acceder a los pergaminos de reclutamiento.
       </p>
       
       <div className="space-y-4">
@@ -58,7 +61,7 @@ const DiscordLogin: React.FC<DiscordLoginProps> = ({ onBack }) => {
             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
           ) : (
             <>
-              <span>Connect with Discord</span>
+              <span>Login with Discord</span>
               <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
@@ -70,7 +73,7 @@ const DiscordLogin: React.FC<DiscordLoginProps> = ({ onBack }) => {
           onClick={onBack}
           className="w-full py-2 text-slate-600 hover:text-slate-400 transition-colors text-[10px] uppercase tracking-[0.3em] font-gothic"
         >
-          Return to Gates
+          Abort Authentication
         </button>
       </div>
     </div>
