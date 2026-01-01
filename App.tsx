@@ -8,6 +8,7 @@ import SuccessPage from './components/SuccessPage';
 import AdminDashboard from './components/AdminDashboard';
 import { Layout } from './components/Layout';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
+import { sendDiscordWebhook } from './discordService';
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>('landing');
@@ -15,12 +16,8 @@ const App: React.FC = () => {
   const [applications, setApplications] = useState<GSApplication[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Gestión de sesión real de Supabase
   useEffect(() => {
-    if (!isSupabaseConfigured()) {
-      console.warn("Supabase is not configured. Real-time auth will not work.");
-      return;
-    }
+    if (!isSupabaseConfigured()) return;
 
     const handleAuth = (session: any) => {
       if (session?.user) {
@@ -41,8 +38,6 @@ const App: React.FC = () => {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       handleAuth(session);
-    }).catch(err => {
-      console.error("Session error:", err.message || err);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -53,26 +48,13 @@ const App: React.FC = () => {
   }, []);
 
   const fetchApplications = async () => {
-    if (!isSupabaseConfigured()) {
-      console.warn("Fetch skipped: Supabase not configured.");
-      return;
-    }
-
+    if (!isSupabaseConfigured()) return;
     try {
       const { data, error } = await supabase
         .from('gs_applications')
         .select('*')
         .order('submitted_at', { ascending: false });
-
-      if (error) {
-        // If the table doesn't exist yet, we handle it gracefully
-        if (error.code === 'PGRST116' || error.message.includes('not found')) {
-          console.info("Applications table might not exist yet. Check Supabase setup.");
-          setApplications([]);
-          return;
-        }
-        throw error;
-      }
+      if (error) throw error;
       
       const mappedData: GSApplication[] = (data || []).map((app: any) => ({
         id: app.id,
@@ -88,23 +70,16 @@ const App: React.FC = () => {
         hackerScenario: app.hacker_scenario,
         ethicsScenario: app.ethics_scenario,
         pressureScenario: app.pressure_scenario,
-        communicationScenario: app.communication_scenario || app.communication_scen || '',
+        communicationScenario: app.communication_scenario,
         contribution: app.contribution,
         status: app.status,
         aiScore: app.ai_score,
         aiSummary: app.ai_summary,
         submittedAt: app.submitted_at,
       }));
-
       setApplications(mappedData);
-    } catch (err: any) {
-      // Better error reporting to avoid [object Object]
-      const errorMsg = err.message || (typeof err === 'string' ? err : JSON.stringify(err));
-      console.error("Cloud fetch error:", errorMsg);
-      
-      if (errorMsg.includes('failed to fetch') || errorMsg.includes('NetworkError')) {
-        console.error("Network error detected. Check your Supabase URL or internet connection.");
-      }
+    } catch (err) {
+      console.error("Fetch error:", err);
     }
   };
 
@@ -137,14 +112,16 @@ const App: React.FC = () => {
           ai_summary: app.aiSummary,
           submitted_at: app.submittedAt
         }]);
+        
         if (error) throw error;
+
+        // Enviar notificación a Discord vía Webhook
+        await sendDiscordWebhook(app);
+
       } catch (err: any) {
-        console.error("Database error:", err.message || err);
-        alert("Error saving application: " + (err.message || "Unknown error"));
+        console.error("Database error:", err.message);
+        alert("Error: " + err.message);
       }
-    } else {
-      console.error("Cannot submit: Supabase not configured.");
-      alert("System not configured. Please contact administration.");
     }
 
     await fetchApplications();
@@ -158,7 +135,7 @@ const App: React.FC = () => {
         <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-center justify-center">
           <div className="text-center">
             <div className="w-20 h-20 border-b-2 border-[#c5a059] rounded-full animate-spin mb-6 mx-auto"></div>
-            <p className="font-fantasy gold-text text-2xl tracking-[0.3em] animate-pulse">Encoding Scroll...</p>
+            <p className="font-fantasy gold-text text-2xl tracking-[0.3em] animate-pulse">Sincronizando con Discord...</p>
           </div>
         </div>
       )}
