@@ -8,11 +8,20 @@ interface DiscordLoginProps {
 
 const DiscordLogin: React.FC<DiscordLoginProps> = ({ onBack }) => {
   const [loading, setLoading] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const configured = isSupabaseConfigured();
+
+  // Función para construir la URL de callback probable de Supabase
+  const getCallbackUrl = () => {
+    const env = (import.meta as any).env || {};
+    const url = env.VITE_SUPABASE_URL || '';
+    if (!url || url.includes('placeholder')) return 'https://TU_PROYECTO.supabase.co/auth/v1/callback';
+    return `${url}/auth/v1/callback`;
+  };
 
   const handleLoginAction = async () => {
     if (!configured) {
-      alert("⚠️ Error de Configuración: No se detectaron las llaves de Supabase en el servidor.");
+      alert("⚠️ Error: Configura primero las variables VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en Vercel.");
       return;
     }
 
@@ -27,12 +36,13 @@ const DiscordLogin: React.FC<DiscordLoginProps> = ({ onBack }) => {
       });
       
       if (error) {
-        alert(`Error de Auth: ${error.message}`);
+        console.error("Auth error:", error);
+        setShowHelp(true);
         setLoading(false);
       }
     } catch (err: any) {
       console.error("Critical Auth Error:", err);
-      alert("Error crítico al conectar con el servidor de autenticación.");
+      setShowHelp(true);
       setLoading(false);
     }
   };
@@ -47,17 +57,42 @@ const DiscordLogin: React.FC<DiscordLoginProps> = ({ onBack }) => {
       
       <h2 className="text-2xl font-fantasy gold-text mb-4 uppercase tracking-[0.2em]">Council Verification</h2>
       
-      {!configured ? (
-        <div className="bg-red-900/20 border border-red-900/50 p-4 mb-8 text-left">
-          <p className="text-red-400 text-xs font-bold uppercase mb-2">⚠️ Error de Sistema</p>
+      {showHelp ? (
+        <div className="bg-amber-900/20 border border-amber-900/50 p-5 mb-8 text-left">
+          <p className="text-amber-400 text-xs font-bold uppercase mb-3">🛠️ Error de Redirección OAuth2</p>
           <p className="text-slate-400 text-[10px] leading-relaxed mb-4">
-            Las variables de entorno no han sido detectadas. Para corregir esto:
+            Discord rechaza la conexión porque la URL no está autorizada. Haz esto:
+          </p>
+          <ol className="text-[10px] text-slate-300 space-y-3 list-decimal pl-4 font-gothic">
+            <li>Ve al <strong>Discord Developer Portal</strong> -> Tu App -> OAuth2.</li>
+            <li>En <strong>Redirects</strong>, añade esta URL exactamente:
+              <div className="mt-2 p-2 bg-black/60 border border-amber-900/30 font-mono text-[9px] break-all select-all text-amber-200">
+                {getCallbackUrl()}
+              </div>
+            </li>
+            <li>En <strong>Supabase Dashboard</strong> -> Authentication -> URL Configuration:
+              <ul className="mt-1 list-disc pl-4 text-slate-400">
+                <li>Site URL: <code className="text-slate-200">{window.location.origin}</code></li>
+              </ul>
+            </li>
+          </ol>
+          <button 
+            onClick={() => setShowHelp(false)}
+            className="mt-6 w-full py-2 bg-amber-900/40 hover:bg-amber-900/60 text-amber-100 text-[10px] uppercase tracking-widest font-bold transition-colors"
+          >
+            Intentar de nuevo
+          </button>
+        </div>
+      ) : !configured ? (
+        <div className="bg-red-900/20 border border-red-900/50 p-4 mb-8 text-left">
+          <p className="text-red-400 text-xs font-bold uppercase mb-2">⚠️ Error de Configuración</p>
+          <p className="text-slate-400 text-[10px] leading-relaxed mb-4">
+            Asegúrate de renombrar las variables en Vercel con el prefijo <strong>VITE_</strong>.
           </p>
           <ul className="text-[9px] text-slate-500 space-y-1 font-mono">
-            <li>1. Ve al panel de Vercel / Configuración.</li>
-            <li>2. Añade <span className="text-slate-300">SUPABASE_URL</span></li>
-            <li>3. Añade <span className="text-slate-300">SUPABASE_ANON_KEY</span></li>
-            <li>4. Reinicia el despliegue.</li>
+            <li>1. <span className="text-slate-300">VITE_SUPABASE_URL</span></li>
+            <li>2. <span className="text-slate-300">VITE_SUPABASE_ANON_KEY</span></li>
+            <li>3. Pulsa <strong>Redeploy</strong> en Vercel.</li>
           </ul>
         </div>
       ) : (
