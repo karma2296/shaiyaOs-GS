@@ -7,7 +7,7 @@ import ApplicationForm from './components/ApplicationForm';
 import SuccessPage from './components/SuccessPage';
 import AdminDashboard from './components/AdminDashboard';
 import { Layout } from './components/Layout';
-import { supabase, isSupabaseConfigured } from './supabaseClient';
+import { supabase } from './supabaseClient';
 
 const App: React.FC = () => {
   const [view, setView] = useState<AppView>('landing');
@@ -48,11 +48,7 @@ const App: React.FC = () => {
   }, []);
 
   const fetchApplications = async () => {
-    if (!supabase) {
-      const saved = localStorage.getItem('shaiya_apps');
-      if (saved) setApplications(JSON.parse(saved));
-      return;
-    }
+    if (!supabase) return;
 
     try {
       const { data, error } = await supabase
@@ -76,7 +72,6 @@ const App: React.FC = () => {
         hackerScenario: app.hacker_scenario,
         ethicsScenario: app.ethics_scenario,
         pressureScenario: app.pressure_scenario,
-        // Usamos el nombre que probablemente tiene Supabase (si está truncado en la UI)
         communicationScenario: app.communication_scenario || app.communication_scen || '',
         contribution: app.contribution,
         status: app.status,
@@ -94,11 +89,6 @@ const App: React.FC = () => {
   useEffect(() => {
     fetchApplications();
   }, []);
-
-  const handleLogin = (mockUser: DiscordUser) => {
-    setUser(mockUser);
-    setView('form');
-  };
 
   const handleSubmitApplication = async (app: GSApplication) => {
     setLoading(true);
@@ -128,13 +118,7 @@ const App: React.FC = () => {
         if (error) throw error;
       } catch (err) {
         console.error("Database error:", err);
-        // Fallback local si la red falla
-        const current = JSON.parse(localStorage.getItem('shaiya_apps') || '[]');
-        localStorage.setItem('shaiya_apps', JSON.stringify([app, ...current]));
       }
-    } else {
-      const current = JSON.parse(localStorage.getItem('shaiya_apps') || '[]');
-      localStorage.setItem('shaiya_apps', JSON.stringify([app, ...current]));
     }
 
     await fetchApplications();
@@ -148,12 +132,12 @@ const App: React.FC = () => {
         <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-center justify-center">
           <div className="text-center">
             <div className="w-20 h-20 border-b-2 border-[#c5a059] rounded-full animate-spin mb-6 mx-auto"></div>
-            <p className="font-fantasy gold-text text-2xl tracking-[0.3em] animate-pulse">Processing Scroll...</p>
+            <p className="font-fantasy gold-text text-2xl tracking-[0.3em] animate-pulse">Encoding Scroll...</p>
           </div>
         </div>
       )}
       {view === 'landing' && <LandingPage onStart={() => setView('login')} onAdmin={() => setView('admin')} />}
-      {view === 'login' && <DiscordLogin onLogin={handleLogin} onBack={() => setView('landing')} />}
+      {view === 'login' && <DiscordLogin onLogin={() => {}} onBack={() => setView('landing')} />}
       {view === 'form' && user && <ApplicationForm user={user} onSubmit={handleSubmitApplication} onCancel={() => setView('landing')} />}
       {view === 'success' && <SuccessPage onReturn={() => setView('landing')} />}
       {view === 'admin' && <AdminDashboard applications={applications} onBack={() => setView('landing')} onRefresh={fetchApplications} />}

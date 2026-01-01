@@ -39,7 +39,7 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({ user, onSubmit, onCan
     const newApp: GSApplication = {
       id: Math.random().toString(36).substring(7),
       userId: user.id,
-      discordTag: user.discriminator !== '0000' ? `${user.username}#${user.discriminator}` : user.username,
+      discordTag: user.username,
       discordAvatar: user.avatar,
       ...formData,
       status: 'pending',
@@ -58,11 +58,15 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({ user, onSubmit, onCan
         <div className="flex items-center gap-5">
           <div className="relative">
             <img src={user.avatar} alt="Avatar" className="w-16 h-16 rounded-none border border-[#c5a059] shadow-lg object-cover" />
-            <div className="absolute -bottom-1 -right-1 bg-[#c5a059] w-4 h-4 border border-black"></div>
+            <div className="absolute -bottom-1 -right-1 bg-emerald-500 w-4 h-4 border border-black rounded-full animate-pulse shadow-[0_0_10px_#10b981]"></div>
           </div>
           <div>
-            <h2 className="text-2xl font-fantasy font-bold gold-text tracking-wide uppercase">GS Application Form</h2>
-            <p className="text-slate-500 font-gothic text-sm">{user.username}</p>
+            <h2 className="text-2xl font-fantasy font-bold gold-text tracking-wide uppercase">GS Official Scroll</h2>
+            <div className="flex items-center gap-2">
+              <span className="text-emerald-400 font-gothic text-[10px] uppercase tracking-widest border border-emerald-500/30 px-2 py-0.5 bg-emerald-500/5">Verified Identity:</span>
+              <p className="text-slate-200 font-gothic text-xs font-bold">{user.username}</p>
+              <span className="text-slate-600 text-[9px] font-mono opacity-50">ID: {user.id.substring(0, 8)}...</span>
+            </div>
           </div>
         </div>
         <button onClick={onCancel} className="text-slate-600 hover:text-[#c5a059] transition-colors p-2">
@@ -72,7 +76,7 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({ user, onSubmit, onCan
 
       <form onSubmit={handleFormSubmit} className="p-8 space-y-10 max-h-[75vh] overflow-y-auto custom-scrollbar bg-black/40">
         <section className="space-y-6">
-          <h3 className="text-lg font-fantasy gold-text border-b border-[#c5a059]/10 pb-2 uppercase tracking-widest">Hero Identification</h3>
+          <h3 className="text-lg font-fantasy gold-text border-b border-[#c5a059]/10 pb-2 uppercase tracking-widest">Character Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-xs font-gothic uppercase tracking-tighter text-slate-400">In-Game Name (Main IGN)</label>
@@ -101,19 +105,19 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({ user, onSubmit, onCan
         </section>
 
         <section className="space-y-6">
-          <h3 className="text-lg font-fantasy gold-text border-b border-[#c5a059]/10 pb-2 uppercase tracking-widest">Tale of Service</h3>
+          <h3 className="text-lg font-fantasy gold-text border-b border-[#c5a059]/10 pb-2 uppercase tracking-widest">Service Background</h3>
           <div className="space-y-6">
             <div className="space-y-2">
-              <label className="text-xs font-gothic uppercase tracking-tighter text-slate-400">Previous Staff Experience (List servers and ranks held)</label>
+              <label className="text-xs font-gothic uppercase tracking-tighter text-slate-400">Previous Staff Experience</label>
               <textarea required name="experience" value={formData.experience} onChange={handleChange} rows={3}
                 className="w-full bg-black/60 border border-slate-800 focus:border-[#c5a059] px-4 py-3 text-slate-200 outline-none transition-all resize-none font-gothic"
-                placeholder="Describe your history in the staff ranks..." />
+                placeholder="List servers and ranks held previously..." />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-gothic uppercase tracking-tighter text-slate-400">What unique values can you contribute to Shaiya OS?</label>
+              <label className="text-xs font-gothic uppercase tracking-tighter text-slate-400">Unique Values for Shaiya OS</label>
               <textarea required name="contribution" value={formData.contribution} onChange={handleChange} rows={3}
                 className="w-full bg-black/60 border border-slate-800 focus:border-[#c5a059] px-4 py-3 text-slate-200 outline-none transition-all resize-none font-gothic"
-                placeholder="Skills, events, or community ideas..." />
+                placeholder="Skills, events, or community ideas you bring..." />
             </div>
           </div>
         </section>
@@ -123,53 +127,53 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({ user, onSubmit, onCan
           <div className="space-y-8">
             <div className="space-y-3">
               <label className="text-sm font-gothic text-slate-300 leading-relaxed italic border-l-2 border-[#c5a059]/40 pl-4 py-1">
-                Trial 1: You are in a PvP zone and two players from opposing factions begin to escalate insults in the General Chat. How do you intervene?
+                Trial 1: Conflict resolution in PvP zones.
               </label>
               <textarea required name="conflictScenario" value={formData.conflictScenario} onChange={handleChange} rows={4}
                 className="w-full bg-black/60 border border-slate-800 focus:border-[#c5a059] px-4 py-3 text-slate-200 outline-none transition-all resize-none font-gothic"
-                placeholder="Outline your disciplinary steps..." />
+                placeholder="How do you handle toxicity in chat?" />
             </div>
             <div className="space-y-3">
               <label className="text-sm font-gothic text-slate-300 leading-relaxed italic border-l-2 border-[#c5a059]/40 pl-4 py-1">
-                Trial 2: You suspect a player is using prohibited software (Speedhack) to reach Boss spawns. What evidence would you gather before reporting?
+                Trial 2: Anti-Cheat methodology.
               </label>
               <textarea required name="hackerScenario" value={formData.hackerScenario} onChange={handleChange} rows={4}
                 className="w-full bg-black/60 border border-slate-800 focus:border-[#c5a059] px-4 py-3 text-slate-200 outline-none transition-all resize-none font-gothic"
-                placeholder="Describe your investigative methodology..." />
+                placeholder="What evidence do you gather before a ban?" />
             </div>
             <div className="space-y-3">
               <label className="text-sm font-gothic text-slate-300 leading-relaxed italic border-l-2 border-[#c5a059]/40 pl-4 py-1">
-                Trial 3 (Staff Integrity): You witness a fellow staff member granting unfair advantages or rare items to their personal friends. What is your course of action?
+                Trial 3: Staff Ethics.
               </label>
               <textarea required name="ethicsScenario" value={formData.ethicsScenario} onChange={handleChange} rows={4}
                 className="w-full bg-black/60 border border-slate-800 focus:border-[#c5a059] px-4 py-3 text-slate-200 outline-none transition-all resize-none font-gothic"
-                placeholder="How would you handle internal misconduct?" />
+                placeholder="Misconduct by a fellow staff member?" />
             </div>
             <div className="space-y-3">
               <label className="text-sm font-gothic text-slate-300 leading-relaxed italic border-l-2 border-[#c5a059]/40 pl-4 py-1">
-                Trial 4 (Task Prioritization): You are flooded with support whispers while simultaneously trying to record a potential hacker in a busy dungeon. How do you prioritize your duties?
+                Trial 4: Prioritization under stress.
               </label>
               <textarea required name="pressureScenario" value={formData.pressureScenario} onChange={handleChange} rows={4}
                 className="w-full bg-black/60 border border-slate-800 focus:border-[#c5a059] px-4 py-3 text-slate-200 outline-none transition-all resize-none font-gothic"
-                placeholder="Describe your workflow under high pressure..." />
+                placeholder="Flood of support vs game moderation?" />
             </div>
             <div className="space-y-3">
               <label className="text-sm font-gothic text-slate-300 leading-relaxed italic border-l-2 border-[#c5a059]/40 pl-4 py-1">
-                Trial 5 (Crisis Management): A critical server-wide lag spike causes players to lose items or experience. The community is outraged in chat. How do you communicate with them while waiting for developer instructions?
+                Trial 5: Community Crisis.
               </label>
               <textarea required name="communicationScenario" value={formData.communicationScenario} onChange={handleChange} rows={4}
                 className="w-full bg-black/60 border border-slate-800 focus:border-[#c5a059] px-4 py-3 text-slate-200 outline-none transition-all resize-none font-gothic"
-                placeholder="What is your strategy for community appeasement?" />
+                placeholder="Managing outrage after server technical issues?" />
             </div>
           </div>
         </section>
 
         <div className="pt-10 border-t border-[#c5a059]/10 flex flex-col md:flex-row gap-6 items-center">
           <div className="text-[10px] text-slate-600 font-gothic leading-relaxed flex-1 uppercase tracking-wider">
-            BY SUBMITTING, YOU ACKNOWLEDGE THAT ALL INFORMATION IS ACCURATE. YOUR RESPONSES WILL BE REVIEWED BY THE REALM ADMINISTRATORS AND CROSS-REFERENCED BY AN AI ANALYTICS ENGINE.
+            AL ENVIAR ESTA SOLICITUD, TU IDENTIDAD DE DISCORD ({user.username}) QUEDARÁ VINCULADA PERMANENTEMENTE A ESTE EXPEDIENTE PARA REVISIÓN DEL STAFF.
           </div>
           <button type="submit" disabled={loading} className="btn-shaiya w-full md:w-auto px-12 py-5 font-fantasy text-lg font-bold disabled:opacity-50">
-            {loading ? "Invoking AI Oracle..." : "Submit Application"}
+            {loading ? "Validating with AI Sentinel..." : "Submit Official Scroll"}
           </button>
         </div>
       </form>
